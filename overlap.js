@@ -2,7 +2,7 @@ function findOverlap(keyList1, keyList2) {
     /**
      * Finds the overlap between two sets of keylists.
      * The second keylist must be larger than the first keylist.
-     * 
+     *
      * @param {Keyframe[]} keyList1 - The first keylist.
      * @param {Keyframe[]} keyList2 - The second keylist.
      * @returns {Keyframe[]} - The list of overlapping keyframes.
@@ -39,7 +39,7 @@ function findOverlap(keyList1, keyList2) {
 function getValue(key1, key2, frame) {
     /**
      * Interpolates between two keyframes to get an intermediate value.
-     * 
+     *
      * @param {Keyframe} key1 - The first keyframe.
      * @param {Keyframe} key2 - The second keyframe.
      * @param {number} frame - The frame to evaluate.
@@ -58,13 +58,13 @@ function getValue(key1, key2, frame) {
     }
 
     const c = y1 - m * x1;
-    return (m * frame) + c;
+    return m * frame + c;
 }
 
 function interval(keyList, frame) {
     /**
      * Returns the interval keyframes given a frame number.
-     * 
+     *
      * @param {Keyframe[]} keyList - The list of keyframes to check.
      * @param {number} frame - The frame to check the interval between.
      * @returns {[Keyframe, Keyframe]} - The keyframes that are within that interval.
@@ -86,11 +86,10 @@ function interval(keyList, frame) {
     }
 }
 
-
 function addKeyframes(insertedKeys, nextKeys) {
     /**
      * Adds two lists of keyframes together, modifying the insertedKeys list.
-     * 
+     *
      * @param {Keyframe[]} insertedKeys - The keyframes that are already inserted on the object.
      * @param {Keyframe[]} nextKeys - The keyframes that will be inserted next (the upcoming note).
      * @throws {Error} - If the first frame of `insertedKeys` is greater than the first frame of `nextKeys`.
@@ -118,7 +117,7 @@ function addKeyframes(insertedKeys, nextKeys) {
         if (insertedKeysInterValues[i] === undefined || keysOverlapping[i] === undefined) {
             break;
         }
-        
+
         keysOverlapping[i].value += insertedKeysInterValues[i].value;
     }
 
@@ -138,7 +137,7 @@ function minKeyframes(insertedKeys, nextKeys) {
     /**
      * Compares two lists of keyframes and keeps the minimum values where they overlap.
      * Modifies the insertedKeys list.
-     * 
+     *
      * @param {Keyframe[]} insertedKeys - The keyframes that are already inserted on the object.
      * @param {Keyframe[]} nextKeys - The keyframes that will be inserted next (the upcoming note).
      */
@@ -162,15 +161,20 @@ function minKeyframes(insertedKeys, nextKeys) {
 
     // Compare the keyframe values and keep the minimum value
     for (let i = 0; i < keysOverlapping.length; i++) {
+        if (insertedKeysInterValues[i] === undefined || keysOverlapping[i] === undefined) {
+            break;
+        }
         const key = keysOverlapping[i];
         const interp = insertedKeysInterValues[i];
         if (interp.value !== 0 && key.value !== 0) {
-            console.log(key.value, interp.value);
             key.value = Math.min(key.value, interp.value);
         }
     }
 
     for (let i = 0; i < nextKeys.length; i++) {
+        if (nextKeysInterValues[i] === undefined || nextKeys[i] === undefined) {
+            break;
+        }
         const key = nextKeys[i];
         const interp = nextKeysInterValues[i];
         if (interp.value !== 0 && key.value !== 0) {
@@ -179,7 +183,7 @@ function minKeyframes(insertedKeys, nextKeys) {
     }
 
     // Extend the lists (insert nextKeys only if they don't already exist in insertedKeys)
-    const nonOverlappingKeys = nextKeys.filter(key => !keysOverlapping.some(k => k.frame === key.frame));
+    const nonOverlappingKeys = nextKeys.filter((key) => !keysOverlapping.some((k) => k.frame === key.frame));
     insertedKeys.push(...nonOverlappingKeys);
     insertedKeys.sort((a, b) => a.frame - b.frame);
     return insertedKeys;
@@ -189,7 +193,7 @@ function maxKeyframes(insertedKeys, nextKeys) {
     /**
      * Compares two lists of keyframes and keeps the maximum values where they overlap.
      * Modifies the insertedKeys list.
-     * 
+     *
      * @param {Keyframe[]} insertedKeys - The keyframes that are already inserted on the object.
      * @param {Keyframe[]} nextKeys - The keyframes that will be inserted next (the upcoming note).
      */
@@ -231,7 +235,7 @@ function maxKeyframes(insertedKeys, nextKeys) {
     }
 
     // Extend the lists (insert nextKeys only if they don't already exist in insertedKeys)
-    const nonOverlappingKeys = nextKeys.filter(key => !keysOverlapping.some(k => k.frame === key.frame));
+    const nonOverlappingKeys = nextKeys.filter((key) => !keysOverlapping.some((k) => k.frame === key.frame));
     insertedKeys.push(...nonOverlappingKeys);
     insertedKeys.sort((a, b) => a.frame - b.frame);
 
@@ -241,7 +245,7 @@ function maxKeyframes(insertedKeys, nextKeys) {
 function prevKeyframes(insertedKeys, nextKeys) {
     /**
      * Merges two lists of keyframes, avoiding overlaps.
-     * 
+     *
      * @param {Keyframe[]} insertedKeys - The list of keyframes that have been inserted.
      * @param {Keyframe[]} nextKeys - The list of keyframes to be potentially added.
      */
@@ -254,15 +258,14 @@ function prevKeyframes(insertedKeys, nextKeys) {
 
     // Sort the keyframes by the frame value
     insertedKeys.sort((a, b) => a.frame - b.frame);
-    
+
     return insertedKeys;
 }
-
 
 function nextKeyframes(insertedKeys, nextKeys) {
     /**
      * Handles the merging of keyframes, removing overlapping keyframes from insertedKeys.
-     * 
+     *
      * @param {Keyframe[]} insertedKeys - The keyframes that are already inserted on the object.
      * @param {Keyframe[]} nextKeys - The keyframes that will be inserted next (the upcoming note).
      */
@@ -291,7 +294,7 @@ function nextKeyframes(insertedKeys, nextKeys) {
 function restValueCrossingKeyframes(insertedKeys, nextKeys) {
     /**
      * Adjusts keyframe values to smoothly transition through a rest value (0) and merges keyframes.
-     * 
+     *
      * @param {Keyframe[]} insertedKeys - The keyframes that are already inserted on the object.
      * @param {Keyframe[]} nextKeys - The keyframes that will be inserted next (the upcoming note).
      */
@@ -315,12 +318,13 @@ function restValueCrossingKeyframes(insertedKeys, nextKeys) {
     }
 
     // Identify non-overlapping keyframes in nextKeys
-    const overlappingFrames = new Set(keysOverlapping.map(k => k.frame));
-    const nonOverlappingNextKeys = nextKeys.filter(key => !overlappingFrames.has(key.frame));
+    const overlappingFrames = new Set(keysOverlapping.map((k) => k.frame));
+    const nonOverlappingNextKeys = nextKeys.filter((key) => !overlappingFrames.has(key.frame));
 
     // Combine non-overlapping nextKeys with insertedKeys
     const finalKeyframes = [];
-    let i = 0, j = 0;
+    let i = 0,
+        j = 0;
 
     while (i < insertedKeys.length && j < nonOverlappingNextKeys.length) {
         if (insertedKeys[i].frame < nonOverlappingNextKeys[j].frame) {
@@ -346,7 +350,7 @@ function pruneKeyframes(insertedKeys, nextKeys) {
     /**
      * Prunes keyframes by removing overlapping keyframes from the end of insertedKeys
      * and merges with nextKeys, then sorts the result.
-     * 
+     *
      * @param {Keyframe[]} insertedKeys - The keyframes that are already inserted on the object.
      * @param {Keyframe[]} nextKeys - The keyframes that will be inserted next (the upcoming note).
      */
@@ -355,21 +359,21 @@ function pruneKeyframes(insertedKeys, nextKeys) {
     let finalKeyframes;
 
     if (keysOverlapping.length > 0) {
-        const lastOverlapFrame = Math.max(...keysOverlapping.map(key => key.frame));
+        const lastOverlapFrame = Math.max(...keysOverlapping.map((key) => key.frame));
 
         // Identify keyframes in insertedKeys that overlap and are near the end
-        const prunedInsertedKeys = insertedKeys.filter(key => key.frame <= lastOverlapFrame);
+        const prunedInsertedKeys = insertedKeys.filter((key) => key.frame <= lastOverlapFrame);
 
         // Remove the last keyframe or two if there's overlap
         if (prunedInsertedKeys.length > 1) {
-            prunedInsertedKeys.pop();  // Remove the last overlapping keyframe
+            prunedInsertedKeys.pop(); // Remove the last overlapping keyframe
             if (prunedInsertedKeys.length > 1) {
-                prunedInsertedKeys.pop();  // Optionally remove one more for smoother transition
+                prunedInsertedKeys.pop(); // Optionally remove one more for smoother transition
             }
         }
 
         // Remaining keyframes
-        const remainingInsertedKeys = insertedKeys.filter(key => key.frame > lastOverlapFrame);
+        const remainingInsertedKeys = insertedKeys.filter((key) => key.frame > lastOverlapFrame);
 
         // Final keyframes after pruning
         finalKeyframes = [...prunedInsertedKeys, ...remainingInsertedKeys, ...nextKeys];
@@ -380,7 +384,7 @@ function pruneKeyframes(insertedKeys, nextKeys) {
 
     // Sort and update the insertedKeys with pruned results
     finalKeyframes.sort((a, b) => a.frame - b.frame);
-    insertedKeys.length = 0;  // Clear the array
+    insertedKeys.length = 0; // Clear the array
     insertedKeys.push(...finalKeyframes);
     return insertedKeys;
 }

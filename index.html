@@ -26,8 +26,33 @@
             <br />
             slider
             <input type="range" id="slider" value="9" min="-50" max="50" step="1" />
+            <br />
+            keyframes
+            <input id="keyframes" type="text" value="(0,0),(3,5),(11,-2),(16,1.5),(23,0)" />
+            <br />
+            default keyframes:
+            <select id="default-keyframes">
+                <option value="(0,0),(15,5),(18,5),(33,0)">Default</option>
+                <option value="(0,0),(3,5),(11,-2),(16,1.5),(23,0)">Drumstick Motion</option>
+            </select>
         </div>
         <script>
+            // make basic point class
+            class Keyframe {
+                constructor(frame, value) {
+                    this.frame = frame;
+                    this.value = value;
+                }
+
+                toString() {
+                    return `(${this.frame}, ${this.value})`;
+                }
+
+                clone() {
+                    return new Keyframe(this.frame, this.value);
+                }
+            }
+
             var elt = document.getElementById("calculator");
             var calculator = Desmos.GraphingCalculator(elt, {
                 expressions: false,
@@ -52,21 +77,9 @@
                 top: 33.271,
             });
 
-            // make basic point class
-            class Keyframe {
-                constructor(frame, value) {
-                    this.frame = frame;
-                    this.value = value;
-                }
-
-                toString() {
-                    return `(${this.frame}, ${this.value})`;
-                }
-
-                clone() {
-                    return new Keyframe(this.frame, this.value);
-                }
-            }
+            // Define points to display
+            // can be overwritten!!! (default ones provided)
+            var originalPts = [new Keyframe(0, 0), new Keyframe(15, 5), new Keyframe(18, 5), new Keyframe(33, 0)];
 
             // because javascript is so dumb and i cant just use structuredClone() >:(
             // >> "[object Object]"
@@ -101,11 +114,6 @@
                 }
             }
 
-            // Define points to display
-            // var originalPts = [new Keyframe(0, 0), new Keyframe(1, 5), new Keyframe(2, 5), new Keyframe(3, 0)];
-            // use pts (0,0),(15,5),(18,5),(33,0)
-            var originalPts = [new Keyframe(0, 0), new Keyframe(15, 5), new Keyframe(18, 5), new Keyframe(33, 0)];
-
             calculator.setExpression({ id: "computed", latex: "a = " + originalPts.map((pt) => pt.toString()).join(", "), lines: true });
 
             calculator.setExpression({ id: "drag", latex: "d = 9", sliderBounds: { min: "-50", max: "50", step: "" } });
@@ -119,6 +127,28 @@
                 $("#slider").on("input", function () {
                     var value = $(this).val();
                     calculator.setExpression({ id: "drag", latex: "d = " + value });
+                });
+
+                $("#keyframes").on("input", function () {
+                    var value = $(this).val();
+                    var keyframes = value.replaceAll("(", "").split("),");
+                    var newKeys = [];
+                    for (pt of keyframes) {
+                        var parts = pt.split(",");
+                        var frame = parseFloat(parts[0]);
+                        var value = parseFloat(parts[1]);
+                        newKeys.push(new Keyframe(frame, value));
+                    }
+                    originalPts = newKeys;
+
+                    calculator.setExpression({ id: "computed", latex: "a = " + originalPts.map((pt) => pt.toString()).join(", "), lines: true });
+                });
+
+                $("#default-keyframes").change(function () {
+                    var value = $(this).val();
+                    $("#keyframes").val(value);
+                    $("#keyframes").trigger("input");
+                    useEffect();
                 });
             });
 
