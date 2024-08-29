@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Overlap Method Demo</title>
+        <script src="https://www.desmos.com/api/v1.9/calculator.js?apiKey=dcb31709b452b1cf9dc26972add0fda6"></script>
+        <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
+        <script src="overlap.js"></script>
+    </head>
+    <body>
+        <div id="calculator" style="width: 800px; height: 600px; float: left"></div>
+        <div style="float: left; padding: 10px">
+            Parameters:
+            <br />
+            Overlap Method
+            <select id="overlap-method">
+                <option value="min">Min</option>
+                <option value="max">Max</option>
+                <option value="prev">Previous</option>
+                <option value="next">Next</option>
+                <option value="rvc">Rest Value Crossing</option>
+                <option value="prune">Keyframe Pruning</option>
+                <option value="add">Add</option>
+            </select>
+            <br />
+            slider
+            <input type="range" id="slider" value="9" min="-50" max="50" step="1" />
+        </div>
+        <script>
+            var elt = document.getElementById("calculator");
+            var calculator = Desmos.GraphingCalculator(elt, {
+                expressions: false,
+                keypad: false,
+            });
+
+            overlapMethod = {
+                min: minKeyframes,
+                max: maxKeyframes,
+                prev: prevKeyframes,
+                next: nextKeyframes,
+                rvc: restValueCrossingKeyframes,
+                prune: pruneKeyframes,
+                add: addKeyframes,
+            };
+
+            // setup calculator settings
+            calculator.setMathBounds({
+                left: -8.566,
+                right: 58.671,
+                bottom: -17.156,
+                top: 33.271,
+            });
+
+            // make basic point class
+            class Keyframe {
+                constructor(frame, value) {
+                    this.frame = frame;
+                    this.value = value;
+                }
+
+                toString() {
+                    return `(${this.frame}, ${this.value})`;
+                }
+
+                clone() {
+                    return new Keyframe(this.frame, this.value);
+                }
+            }
+
+            // because javascript is so dumb and i cant just use structuredClone() >:(
+            // >> "[object Object]"
+            function cloneKeyframes(arr) {
+                if (arr == null || arr == undefined || arr.length == 0) {
+                    return [];
+                }
+                return arr.map((key) => key.clone());
+            }
+
+            function useEffect() {
+                var analysis = calculator.expressionAnalysis["drag"];
+                if (analysis && analysis.evaluation) {
+                    var dValue = analysis.evaluation.value;
+
+                    // compute 2nd set of points based off of drag valu
+                    var newPts = originalPts.map((pt) => new Keyframe(pt.frame + dValue, pt.value));
+                    var newPoints = newPts.map((pt) => pt.toString()).join(", ");
+                    calculator.setExpression({ id: "computed2", latex: "b = " + newPoints, lines: true });
+                    // build the overlap
+                    try {
+                        var method = document.getElementById("overlap-method").value;
+                        var overlap = overlapMethod[method](cloneKeyframes(originalPts), cloneKeyframes(newPts));
+                        // var overlap = maxKeyframes(cloneKeyframes(originalPts), cloneKeyframes(newPts));
+                        // console.log("OVERLAP RESULT" + overlap);
+
+                        var overlapPoints = overlap.map((pt) => pt.toString()).join(", ");
+                        calculator.setExpression({ id: "overlap", latex: "c = " + overlapPoints, lines: true, color: Desmos.Colors.ORANGE });
+                    } catch (e) {
+                        console.error(e);
+                    }
+                }
+            }
+
+            // Define points to display
+            // var originalPts = [new Keyframe(0, 0), new Keyframe(1, 5), new Keyframe(2, 5), new Keyframe(3, 0)];
+            // use pts (0,0),(15,5),(18,5),(33,0)
+            var originalPts = [new Keyframe(0, 0), new Keyframe(15, 5), new Keyframe(18, 5), new Keyframe(33, 0)];
+
+            calculator.setExpression({ id: "computed", latex: "a = " + originalPts.map((pt) => pt.toString()).join(", "), lines: true });
+
+            calculator.setExpression({ id: "drag", latex: "d = 9", sliderBounds: { min: "-50", max: "50", step: "" } });
+
+            // observe graph changes
+            calculator.observe("expressionAnalysis", useEffect);
+
+            $("#overlap-method").change(useEffect);
+
+            $(document).ready(function () {
+                $("#slider").on("input", function () {
+                    var value = $(this).val();
+                    calculator.setExpression({ id: "drag", latex: "d = " + value });
+                });
+            });
+
+            calculator.setExpression({ id: "vert_line", latex: "d\\le x\\le a\\left[\\operatorname{length}\\left(a\\right)\\right].x" });
+        </script>
+    </body>
+</html>
